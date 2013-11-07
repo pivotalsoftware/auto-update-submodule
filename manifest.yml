@@ -1,6 +1,6 @@
 ---
 applications:
-- name: auto-update-submodule
+- name: java-buildpack-system-test-auto-update-submodule
   memory: 512M
   instances: 1
   path: .

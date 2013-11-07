@@ -1,4 +1,4 @@
-# Auto-update Submodule
+# Auto Update Submodule
 This project is a self-hostable application tha tprovides an easy way to automate the update of submodules.  In the case where the update failes, an email is sent, notifying the recipients that this failure has occured.
 
 In order to facilitate self-hosting, the application is designed to work in [Cloud Foundry][].

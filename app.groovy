@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate
 
 @Grab('spring-boot-starter-actuator')
 @Controller
-class AutoSubmoduleUpdate {
+class AutoUpdateSubmodule {
 
   def REPOSITORY_DIRECTORY = new File(System.getProperty('java.io.tmpdir'), 'repo')
 
@@ -65,7 +65,7 @@ class AutoSubmoduleUpdate {
       sendFailureEmail()
     }
 
-    logger.info('Auto-update submodule complete')
+    logger.info('Auto update submodule complete')
   }
 
   def cloneRepository() {
@@ -75,7 +75,7 @@ class AutoSubmoduleUpdate {
 
     inRepository(['git', 'init'])
     inRepository(['git', 'config', 'user.email', fromAddress])
-    inRepository(['git', 'config', 'user.name', 'Auto Merge Upstream'])
+    inRepository(['git', 'config', 'user.name', 'Auto Submodule Update'])
     inRepository(['git', 'remote', 'add', 'origin', uri])
   }
 
@@ -88,7 +88,9 @@ class AutoSubmoduleUpdate {
 
   def attemptUpdateSubmodule() {
     logger.info('Attempting submodule update')
-    inRepository(['git', 'submodule', 'foreach', 'git', 'pull', 'origin', 'master']).exitValue() == 0
+    def updateSuccess = inRepository(['git', 'submodule', 'foreach', 'git', 'pull', 'origin', 'master']).exitValue() == 0
+    def commitSuccess = inRepository(['git', 'commit', '-a', '-m', 'Submodule updated']).exitValue() == 0
+    updateSuccess && commitSuccess
   }
 
   def pushRepository() {
@@ -102,8 +104,8 @@ class AutoSubmoduleUpdate {
     def uriVariables = ['hostname' : hostname, 'username' : username, 'password' : password,
                         'fromAddress' : fromAddress, 'toAddress' : toAddress,
                         'subject' : 'Unable to update submodules',
-                        'content' : "An attempt to update submodules in ${sterilizeUri(uri)} has failed.  This update "
-                                    "must be executed manually."]
+                        'content' : "An attempt to update submodules in ${sterilizeUri(uri)} has failed.  This " +
+                                    "update must be executed manually."]
 
     restTemplate.postForEntity('https://{hostname}/api/mail.send.json?api_user={username}&api_key={password}' +
                                '&from={fromAddress}&to={toAddress}&subject={subject}&text={content}', null, Map.class,
