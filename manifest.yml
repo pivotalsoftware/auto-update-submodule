@@ -6,8 +6,4 @@ applications:
   path: .
   buildpack: https://github.com/cloudfoundry/java-buildpack.git
   services:
-    sendgrid:
-      label: sendgrid
-      provider: sendgrid
-      version: n/a
-      plan: free
+    - sendgrid

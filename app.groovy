@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import com.github.sendgrid.SendGrid
 import org.slf4j.LoggerFactory
-import org.springframework.web.client.RestTemplate
 
+@Grab('com.sendgrid:sendgrid-java:0.1.2')
 @Grab('spring-boot-starter-actuator')
 @Controller
 class AutoUpdateSubmodule {
@@ -24,8 +25,6 @@ class AutoUpdateSubmodule {
   def REPOSITORY_DIRECTORY = new File(System.getProperty('java.io.tmpdir'), 'repo')
 
   def logger = LoggerFactory.getLogger(this.getClass())
-
-  def restTemplate = new RestTemplate()
 
   @Value('${uri}')
   def uri
@@ -35,9 +34,6 @@ class AutoUpdateSubmodule {
 
   @Value('${to.address}')
   def toAddress
-
-  @Value('${vcap.services.sendgrid.credentials.hostname}')
-  def hostname
 
   @Value('${vcap.services.sendgrid.credentials.username}')
   def username
@@ -101,15 +97,13 @@ class AutoUpdateSubmodule {
   def sendFailureEmail() {
     logger.info("Sending failure email to ${toAddress}")
 
-    def uriVariables = ['hostname' : hostname, 'username' : username, 'password' : password,
-                        'fromAddress' : fromAddress, 'toAddress' : toAddress,
-                        'subject' : 'Unable to update submodules',
-                        'content' : "An attempt to update submodules in ${sterilizeUri(uri)} has failed.  This " +
-                                    "update must be executed manually."]
-
-    restTemplate.postForEntity('https://{hostname}/api/mail.send.json?api_user={username}&api_key={password}' +
-                               '&from={fromAddress}&to={toAddress}&subject={subject}&text={content}', null, Map.class,
-                               uriVariables)
+    def sendGrid = new SendGrid(username, password)
+    sendGrid.setFrom(fromAddress)
+    sendGrid.addTo(toAddress)
+    sendGrid.setSubject('Unable to update submodules')
+    sendGrid.setText("An attempt to update submodules in ${sterilizeUri(uri)} has failed.  This update must be " +
+                     "executed manually.")
+    sendGrid.send()
   }
 
   def sterilizeUri(s) {
